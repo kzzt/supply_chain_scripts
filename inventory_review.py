@@ -59,12 +59,14 @@ query = read_sql("C:\\Users\\uxkp\\sql_queries\\scratch\\ABC_CLASS_PARAMETERS.sq
 
 
 def abc_analysis(data, type="Test"):
+    data["ITEMNUM"] = data["ITEMNUM"].astype(int)
     data["LOCATION"] = data["LOCATION"].astype(object)
 
     inventory_history = read_sql(cfg.inventory_history_886)
     inventory_history.sort_values(by=["LOCATION", "ITEMNUM", "MONTH"], inplace=True)
     print(inventory_history.head())
 
+    inventory_history["ITEMNUM"] = inventory_history["ITEMNUM"].astype(int)
     inventory_history["LOCATION"] = inventory_history["LOCATION"].astype(object)
     inventory_history = pd.pivot_table(
         inventory_history, index=["ITEMNUM", "LOCATION"], columns="MONTH", values="NET_USAGE", aggfunc=sum
@@ -73,6 +75,7 @@ def abc_analysis(data, type="Test"):
     inventory_history["STDDEV"] = inventory_history.std(axis=1)
     inventory_history["CV"] = round(inventory_history["STDDEV"] / inventory_history["MEAN"], 2)
     inventory_history[inventory_history["MEAN"] < 0] = 0
+    print(inventory_history.dtypes, data.dtypes)
     data = pd.merge(inventory_history, data, on=["ITEMNUM", "LOCATION"], how="left")
     data = data.drop(
         data[
@@ -156,24 +159,29 @@ def safety_stock_calculation(df, freq="weekly", service_level=0.95):
 
 # TODO: economic order quantities
 def rop_calculation(location):
-
     exceptions = pd.DataFrame(pd.read_excel("Z:\\SHAWN_MORSE\\EXCEPTIONS.xlsx", sheet_name="STANDARD QTY INFORMATION"))
     exceptions["LOCATION"] = exceptions["LOCATION"].astype(str)
     exceptions_cols = ["ITEMNUM", "LOCATION", "NOTES"]
     # load data sources into data frames (temporarily CSV files) -->
 
     # query_list = [cfg.inv_review_by_week, cfg.inventory_params, cfg.leadtime]
-    df1 = read_sql(cfg.inv_review_by_week)
+    df1 = read_sql(cfg.inv_review_by_week)  # ITEMNUM: object datatype
+    # print(f"df1: {df1.dtypes}")
     # df1 = pd.read_csv("c:\\users\\uxkp\\desktop\\T&D WEEKLY NET USAGE.sql.csv")
+    df1["ITEMNUM"] = df1["ITEMNUM"].astype(int)
     df1["LOCATION"] = df1["LOCATION"].astype(str)
     df2 = read_sql(cfg.inventory_params)
+    # print(f"df2: {df2.dtypes}")
     # df2 = pd.read_csv("c:\\users\\uxkp\\desktop\\Inventory Parameters.sql.csv")
     df2["LOCATION"] = df2["LOCATION"].astype(str)
     df3 = read_sql(cfg.leadtime)
+    # print(f"df3: {df3.dtypes}")
     # df3 = pd.read_csv("c:\\users\\uxkp\\desktop\\Lead Time Review.sql.csv")
     df4 = abc_analysis(query)
     df4 = df4[["ITEMNUM", "ABC", "XYZ"]]
+    # print(f"df4: {df4.dtypes}")
     df5 = exceptions[exceptions_cols]
+    # print(f"df5: {df1.dtypes}")
 
     #  sort historical data by location, itemnum, time -->
     df1.sort_values(by=["LOCATION", "ITEMNUM", "WEEK"], inplace=True)
@@ -190,10 +198,14 @@ def rop_calculation(location):
     # df1_pivot["DAILY_AVG"] = df1_pivot["WEEKLY_AVG"] / 7
 
     # join inventory paramaters to reshaped historical data -->
+
     merged = pd.merge(df1_pivot, df5, on=["ITEMNUM", "LOCATION"], how="left")
+
     merged = merged.merge(df2, how="left", on=["ITEMNUM", "LOCATION"])
     # join lead time data to previously merged data -->
+
     merged = merged.merge(df3, how="left", on="ITEMNUM")
+
     merged = merged.merge(df4, how="left", on="ITEMNUM")
 
     stdpk_regex = r"((?<!\S)(^\/)?(\b[0-9]+\s+\w{2}|[0-9]+)\/+([a-zA-Z]{2})\b)"
