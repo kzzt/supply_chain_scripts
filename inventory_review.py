@@ -16,7 +16,7 @@ def oracle_conn():
     password = cfg.password
     sid = cx_Oracle.makedsn(cfg.host, cfg.port, sid=cfg.sid)  # host, port, sid
 
-    cstr = "oracle://{user}:{password}@{sid}".format(user=user, password=password, sid=sid)
+    cstr = f"oracle://{user}:{password}@{sid}"
 
     engine = create_engine(cstr, convert_unicode=False, pool_recycle=20, pool_size=100, echo=False)
     return engine
@@ -165,7 +165,7 @@ def rop_calculation(location):
     # load data sources into data frames (temporarily CSV files) -->
 
     # query_list = [cfg.inv_review_by_week, cfg.inventory_params, cfg.leadtime]
-    df1 = read_sql(cfg.inv_review_by_week)  # ITEMNUM: object datatype
+    df1 = read_sql(cfg.weekly_inv_usage)  # ITEMNUM: object datatype
     # print(f"df1: {df1.dtypes}")
     # df1 = pd.read_csv("c:\\users\\uxkp\\desktop\\T&D WEEKLY NET USAGE.sql.csv")
     df1["ITEMNUM"] = df1["ITEMNUM"].astype(int)
