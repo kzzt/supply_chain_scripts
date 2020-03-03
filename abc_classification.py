@@ -6,15 +6,17 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 
-import onccfg
+import onccfg as cfg
 
-user = onccfg.username
-password = onccfg.password
-sid = cx_Oracle.makedsn(onccfg.host, onccfg.port, sid=onccfg.sid)  # host, port, sid
+user = cfg.username
+password = cfg.password
+sid = cx_Oracle.makedsn(cfg.host, cfg.port, sid=cfg.sid)  # host, port, sid
 
 cstr = f"oracle://{user}:{password}@{sid}"
 
-engine = create_engine(cstr, convert_unicode=False, pool_recycle=10, pool_size=50, echo=False)
+engine = create_engine(
+    cstr, convert_unicode=False, pool_recycle=10, pool_size=50, echo=False
+)
 
 
 def read_sql(filename):
@@ -49,22 +51,30 @@ def xyz_classification(cv):
 query = read_sql("C:\\Users\\uxkp\\sql_queries\\scratch\\ABC_CLASS_PARAMETERS.sql")
 
 
-def main(data, type="Test"):
+def abc_analysis(data: object, report_type: object = "Test") -> object:
     data["ITEMNUM"] = data["ITEMNUM"].astype(int)
     data["LOCATION"] = data["LOCATION"].astype(object)
 
-    inventory_history = read_sql(onccfg.inventory_history_886)
+    inventory_history = read_sql(cfg.inventory_history_886)
     inventory_history.sort_values(by=["LOCATION", "ITEMNUM", "MONTH"], inplace=True)
     print(inventory_history.head())
     inventory_history = pd.pivot_table(
-        inventory_history, index=["ITEMNUM", "LOCATION"], columns="MONTH", values="NET_USAGE", aggfunc=sum
+        inventory_history,
+        index=["ITEMNUM", "LOCATION"],
+        columns="MONTH",
+        values="NET_USAGE",
+        aggfunc=sum,
     )
 
     inventory_history["MEAN"] = inventory_history.mean(axis=1)
     inventory_history["STDDEV"] = inventory_history.std(axis=1)
-    inventory_history["CV"] = round(inventory_history["STDDEV"] / inventory_history["MEAN"], 2)
+    inventory_history["CV"] = round(
+        inventory_history["STDDEV"] / inventory_history["MEAN"], 2
+    )
     inventory_history[inventory_history["MEAN"] < 0] = 0
-    print(f"data types: {data.dtypes} --- inv_history_types: {inventory_history.dtypes}")
+    print(
+        f"data types: {data.dtypes} --- inv_history_types: {inventory_history.dtypes}"
+    )
     data = pd.merge(inventory_history, data, on=["ITEMNUM", "LOCATION"], how="left")
 
     # EXCLUDE: obsolete, VMI, consignment from classification
@@ -79,12 +89,23 @@ def main(data, type="Test"):
             # | (data["LOCATION STATUS"].eq("PENDOBS"))
             | (data["CONSIGNMENT"] == 1)
             | (data["COMMODITY"].eq("CANC"))
-            ].index
+        ].index
     )
 
     # take a subset of the data, we need to use the price and the quantity of each item
     data_sub = data[
-        ["ITEMNUM", "DESCRIPTION", "MINLEVEL", "ORDERQTY", "CURBAL", "AVGCOST", "MEAN", "STDDEV", "CV", "STATUS"]
+        [
+            "ITEMNUM",
+            "DESCRIPTION",
+            "MINLEVEL",
+            "ORDERQTY",
+            "CURBAL",
+            "AVGCOST",
+            "MEAN",
+            "STDDEV",
+            "CV",
+            "STATUS",
+        ]
     ]
 
     # create the column of the additive cost per itemnum
@@ -141,7 +162,10 @@ def main(data, type="Test"):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     a = ax.annotate(
-        "A", xy=(class_A, pct_A), xytext=(class_A + 1000, 0.75), arrowprops=dict(facecolor="green", shrink=0.05)
+        "A",
+        xy=(class_A, pct_A),
+        xytext=(class_A + 1000, 0.75),
+        arrowprops=dict(facecolor="green", shrink=0.05),
     )
     b = ax.annotate(
         "B",
@@ -161,7 +185,9 @@ def main(data, type="Test"):
     scalar_C = pct_C + pct_B + pct_A
     plt.vlines(class_A, [0], scalar_A, colors="green", linestyles="dotted")
     plt.vlines(class_B + class_A, [0], scalar_B, colors="blue", linestyles="dotted")
-    plt.vlines(class_C + class_B + class_A, [0], scalar_C, colors="red", linestyles="dotted")
+    plt.vlines(
+        class_C + class_B + class_A, [0], scalar_C, colors="red", linestyles="dotted"
+    )
     performance = data_sub["RunPerc"].tolist()
     y_pos = np.arange(len(performance))
 
@@ -172,12 +198,11 @@ def main(data, type="Test"):
     plt.show()
 
     timestring = time.strftime("%Y-%m-%d")
-    data_sub.to_csv("c:\\users\\uxkp\\desktop\\cotter.csv", index=False)
-    writer = pd.ExcelWriter(r"C:\Users\UXKP\Desktop\ABC CLASSIFICATION " + timestring + ".xlsx")
+    data_sub.to_csv("c:\\users\\uxkp\\desktop\\abc_analysis.csv", index=False)
+    writer = pd.ExcelWriter(
+        f"C:\\Users\\UXKP\\Desktop\\ABC CLASSIFICATION {timestring}.xlsx"
+    )
 
     data_sub.to_excel(writer, "ABC CLASSIFICATION", index=False)
     writer.save()
-
-
-if __name__ == "__main__":
-    main(query, "Test")
+    return data_sub
