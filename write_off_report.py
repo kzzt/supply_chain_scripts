@@ -19,9 +19,6 @@ df.columns = map(str.upper, df.columns)
 
 print(df.dtypes)
 
-# sorted_df = df.sort_values(
-#     by=["STOREROOM", "ITEM #", "REPORT"], ascending=[True, True, False],
-# )
 sorted_df = df.sort_values(
     by=["STOREROOM", "REPORT", "ITEM #"], ascending=[True, False, True]
 )
@@ -30,36 +27,6 @@ sorted_df.drop_duplicates(subset=["ITEM #", "STOREROOM"], keep="first", inplace=
 sorted_df["STOREROOM"] = sorted_df["STOREROOM"].apply(lambda x: "{0:0>3}".format(x))
 
 sorted_df = sorted_df.reset_index(drop=True)
-
-print(sorted_df.dtypes)
-
-# sorted_df = sorted_df.astype(
-#     {
-#         "ITEM #": "int",
-#         "DESCRIPTION": "object",
-#         "SITE": "object",
-#         "STOREROOM": "object",
-#         "REPORT": "object",
-#         "STANDARD COST": "float64",
-#         "ROP": "int64",
-#         "MAX": "int64",
-#         "ON HAND": "int64",
-#         "ON-HAND VALUE": "float64",
-#         "ON ORDER": "int64",
-#         "IN TRANSIT": "int64",
-#         "ON PR": "int64",
-#         "SOFT RESERVED": "int64",
-#         "HARD RESERVED": "int64",
-#         "LAST ISSUE DATE": "datetime64",
-#         "INVENTORY REVIEW DATE": "datetime64",
-#         "CALCULATED EXCESS": "int64",
-#         "EXTENDED CALCULATED EXCESS VALUE ": "int64",
-#         "DECISION MAKER'S NAME": "object",
-#         "DECISION": "object",
-#         "REASON FOR RETENTION": "object",
-#         "COMMENTS": "object",
-#     }
-# )
 
 d = date.today()
 
