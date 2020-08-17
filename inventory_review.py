@@ -1,11 +1,9 @@
 import time
-
 import cx_Oracle
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from sqlalchemy import create_engine
-
 import abc_classification
 import onccfg as cfg
 
@@ -56,102 +54,7 @@ def read_sql(filename):
 #         return "Z"
 
 
-query = read_sql("C:\\Users\\uxkp\\sql_queries\\scratch\\ABC_CLASS_PARAMETERS.sql")
-
-
-# def abc_analysis(data: object, report_type: object = "Test") -> object:
-#     data["ITEMNUM"] = data["ITEMNUM"].astype(int)
-#     data["LOCATION"] = data["LOCATION"].astype(object)
-#
-#     inventory_history = read_sql(cfg.inventory_history_886)
-#     inventory_history.sort_values(by=["LOCATION", "ITEMNUM", "MONTH"], inplace=True)
-#     print(inventory_history.head())
-#
-#     inventory_history["ITEMNUM"] = inventory_history["ITEMNUM"].astype(int)
-#     inventory_history["LOCATION"] = inventory_history["LOCATION"].astype(object)
-#     inventory_history = pd.pivot_table(
-#         inventory_history,
-#         index=["ITEMNUM", "LOCATION"],
-#         columns="MONTH",
-#         values="NET_USAGE",
-#         aggfunc=sum,
-#     )
-#     inventory_history["MEAN"] = inventory_history.mean(axis=1)
-#     inventory_history["STDDEV"] = inventory_history.std(axis=1)
-#     inventory_history["CV"] = round(
-#         inventory_history["STDDEV"] / inventory_history["MEAN"], 2
-#     )
-#     inventory_history[inventory_history["MEAN"] < 0] = 0
-#     data = pd.merge(inventory_history, data, on=["ITEMNUM", "LOCATION"], how="left")
-#     data = data.drop(
-#         data[
-#             (data["EX2VMI"] == 1)
-#             | (data["STATUS"].eq("OBSOLETE"))
-#             | (data["STATUS"].eq("PENDOBS"))
-#             # | (data["LOCATION STATUS"].eq("OBSOLETE"))
-#             # | (data["LOCATION STATUS"].eq("PENDOBS"))
-#             | (data["CONSIGNMENT"] == 1)
-#             | (data["COMMODITY"].eq("CANC"))
-#         ].index
-#     )
-#
-#     # take a subset of the data, we need to use the price and the quantity of each item
-#     data_sub = data[
-#         [
-#             "ITEMNUM",
-#             "DESCRIPTION",
-#             "MINLEVEL",
-#             "ORDERQTY",
-#             "CURBAL",
-#             "AVGCOST",
-#             "MEAN",
-#             "STDDEV",
-#             "CV",
-#             "STATUS",
-#         ]
-#     ]
-#
-#     # create the column of the additive cost per itemnum
-#     data_sub["AddCost"] = data_sub["AVGCOST"] * data_sub["MEAN"] * 12
-#     # order by cumulative cost
-#     data_sub = data_sub.sort_values(by=["AddCost"], ascending=False)
-#     # create the column of the running CumCost of the cumulative cost per SKU
-#     data_sub["RunCumCost"] = data_sub["AddCost"].cumsum()
-#     # create the column of the total sum
-#     data_sub["TotSum"] = data_sub["AddCost"].sum()
-#     # create the column of the running percentage
-#     data_sub["RunPerc"] = data_sub["RunCumCost"] / data_sub["TotSum"]
-#     data_sub["ABC"] = data_sub["RunPerc"].apply(abc_classification)
-#     data_sub["XYZ"] = data_sub["CV"].apply(xyz_classification)
-#
-#     print(data_sub.head())
-#
-#     # total TSNs for each class
-#     data_sub.ABC.value_counts()
-#
-#     # total cost per class
-#     class_A = data_sub[data_sub.ABC == "A"]["AddCost"].count()
-#     class_B = data_sub[data_sub.ABC == "B"]["AddCost"].count()
-#     class_C = data_sub[data_sub.ABC == "C"]["AddCost"].count()
-#     print("Class A Items:", class_A)
-#     print("Class B Items:", class_B)
-#     print("Class C Items:", class_C)
-#
-#     # total cost per class
-#     print("Cost of Class A :", data_sub[data_sub.ABC == "A"]["AddCost"].sum())
-#     print("Cost of Class B :", data_sub[data_sub.ABC == "B"]["AddCost"].sum())
-#     print("Cost of Class C :", data_sub[data_sub.ABC == "C"]["AddCost"].sum())
-#
-#     pct_A = data_sub[data_sub.ABC == "A"]["AddCost"].sum() / data_sub["AddCost"].sum()
-#     pct_B = data_sub[data_sub.ABC == "B"]["AddCost"].sum() / data_sub["AddCost"].sum()
-#     pct_C = data_sub[data_sub.ABC == "C"]["AddCost"].sum() / data_sub["AddCost"].sum()
-#     # percent of total cost per class
-#     print("Percent of Cost of Class A :", pct_A)
-#     print("Percent of Cost of Class B :", pct_B)
-#     print("Percent of Cost of Class C :", pct_C)
-#
-#     data_sub.to_csv("c:\\users\\uxkp\\desktop\\ABC_Analysis_886.csv", index=False)
-#     return data_sub
+query = read_sql("D:\\SQL_Queries\\ABC_CLASS_PARAMETERS.sql")
 
 
 def safety_stock_calculation(df, freq="weekly", service_level=0.95):
@@ -178,15 +81,8 @@ def safety_stock_calculation(df, freq="weekly", service_level=0.95):
 
 # TODO: economic order quantities
 def rop_calculation(location):
-    exceptions = pd.DataFrame(
-        pd.read_excel(
-            "Z:\\SHAWN_MORSE\\EXCEPTIONS.xlsx", sheet_name="STANDARD QTY INFORMATION"
-        )
-    )
-    exceptions["LOCATION"] = exceptions["LOCATION"].astype(str)
-    exceptions_cols = ["ITEMNUM", "LOCATION", "NOTES"]
     # load data sources into data frames (temporarily CSV files) -->
-    df1 = read_sql(cfg.weekly_inv_usage_886)  # ITEMNUM: object datatype
+    df1 = read_sql(cfg.trinity_wkly)  # ITEMNUM: object datatype
     df1["ITEMNUM"] = df1["ITEMNUM"].astype(int)
     df1["LOCATION"] = df1["LOCATION"].astype(str)
     df2 = read_sql(cfg.inventory_params)
@@ -194,7 +90,6 @@ def rop_calculation(location):
     df3 = read_sql(cfg.leadtime)
     df4 = abc_classification.abc_analysis(abc_classification.query, "TEST")
     df4 = df4[["ITEMNUM", "ABC", "XYZ"]]
-    df5 = exceptions[exceptions_cols]
 
     #  sort historical data by location, itemnum, time -->
     df1.sort_values(by=["LOCATION", "ITEMNUM", "WEEK"], inplace=True)
@@ -211,9 +106,9 @@ def rop_calculation(location):
 
     # join inventory paramaters to reshaped historical data -->
 
-    merged = pd.merge(df1_pivot, df5, on=["ITEMNUM", "LOCATION"], how="left")
+    # merged = pd.merge(df1_pivot, df5, on=["ITEMNUM", "LOCATION"], how="left")
 
-    merged = merged.merge(df2, how="left", on=["ITEMNUM", "LOCATION"])
+    merged = df1.merge(df2, how="left", on=["ITEMNUM", "LOCATION"])
     # join lead time data to previously merged data -->
 
     merged = merged.merge(df3, how="left", on="ITEMNUM")
@@ -374,7 +269,7 @@ def rop_calculation(location):
     ]
 
     finished_report.to_csv(
-        f"c:\\users\\uxkp\\desktop\\{location}_ROP_review_{timestring}.csv", index=False
+        f"c:\\users\\u6zn\\desktop\\{location}_ROP_review_{timestring}.csv", index=False
     )
 
 

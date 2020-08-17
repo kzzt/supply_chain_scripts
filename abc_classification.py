@@ -48,14 +48,14 @@ def xyz_classification(cv):
         return "Z"
 
 
-query = read_sql("C:\\Users\\uxkp\\sql_queries\\scratch\\ABC_CLASS_PARAMETERS.sql")
+query = read_sql("D:\\SQL_Queries\\ABC_CLASS_PARAMETERS.sql")
 
 
 def abc_analysis(data: object, report_type: object = "Test") -> object:
     data["ITEMNUM"] = data["ITEMNUM"].astype(int)
     data["LOCATION"] = data["LOCATION"].astype(object)
 
-    inventory_history = read_sql(cfg.inventory_history_886)
+    inventory_history = read_sql(cfg.trinity_hist)
     inventory_history.sort_values(by=["LOCATION", "ITEMNUM", "MONTH"], inplace=True)
     print(inventory_history.head())
     inventory_history = pd.pivot_table(
@@ -110,6 +110,7 @@ def abc_analysis(data: object, report_type: object = "Test") -> object:
 
     # create the column of the additive cost per itemnum
     data_sub["AddCost"] = data_sub["AVGCOST"] * data_sub["MEAN"] * 12
+    data_sub.loc[data_sub['AddCost']] = data_sub["AVGCOST"] * data_sub["MEAN"] * 12
     # order by cumulative cost
     data_sub = data_sub.sort_values(by=["AddCost"], ascending=False)
     # create the column of the running CumCost of the cumulative cost per SKU
@@ -198,9 +199,9 @@ def abc_analysis(data: object, report_type: object = "Test") -> object:
     plt.show()
 
     timestring = time.strftime("%Y-%m-%d")
-    data_sub.to_csv("c:\\users\\uxkp\\desktop\\abc_analysis.csv", index=False)
+    data_sub.to_csv("c:\\users\\u6zn\\desktop\\abc_analysis.csv", index=False)
     writer = pd.ExcelWriter(
-        f"C:\\Users\\UXKP\\Desktop\\ABC CLASSIFICATION {timestring}.xlsx"
+        f"C:\\Users\\u6zn\\Desktop\\ABC CLASSIFICATION {timestring}.xlsx"
     )
 
     data_sub.to_excel(writer, "ABC CLASSIFICATION", index=False)
