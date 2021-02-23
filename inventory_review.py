@@ -268,7 +268,6 @@ def rop_calculation(location):
         ]
     ]
 
-    finished_report.to_csv(
         f"c:\\users\\u6zn\\desktop\\{location}_ROP_review_{timestring}.csv", index=False
     )
 

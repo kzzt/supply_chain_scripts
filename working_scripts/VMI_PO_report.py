@@ -1,10 +1,6 @@
 # queries VMI po from the previous week and outputs to file named for PONUMs
-import os
-import random
-from datetime import datetime, date, time, timedelta
-from time import mktime as mk
-
 import cx_Oracle
+
 import pandas as pd
 from sqlalchemy import create_engine
 
@@ -22,14 +18,6 @@ sql_file = open(cfg.vmi_query, "r")
 vmi_query = sql_file.read()
 sql_file.close()
 
-
-def timeFix(filename):
-    hours = time(7, random.randrange(0, 29))
-    today = date.today()
-    last_monday = today - timedelta(days=today.weekday())
-
-    timestamp = mk(datetime.combine(last_monday, hours).timetuple())
-    os.utime(f"Z:\\SHAWN_MORSE\\VMI PO Validation\\{filename}.xlsx", (timestamp, timestamp + 10))
 
 
 def main():
