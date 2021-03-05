@@ -24,7 +24,7 @@ sql_file.close()
 
 def report_emailer(df_report):
     outlook = win32.Dispatch("outlook.application")
-    recipient = "kevin.vaughan@oncor.com"
+    recipient = ""
     subject = "Inventory Errors in Maximo"
     mail = outlook.CreateItem(0)
     mail.To = recipient
