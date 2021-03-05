@@ -1,3 +1,6 @@
 /onccfg.py
-/pvc_report.py
+/emailer.py
 /maximo_error_report.py
+working_scripts/pvc_report.py
+working_scripts/emailer_lowcost.py
+working_scripts/emailer_writeoff.py
