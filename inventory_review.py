@@ -1,60 +1,62 @@
 import time
-import cx_Oracle
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+"""
 from sqlalchemy import create_engine
 import abc_classification
 import onccfg as cfg
+import cx_Oracle
+"""
 
 timestring = time.strftime("%Y-%m-%d")
 
 
-def oracle_conn():
-    user = cfg.username
-    password = cfg.password
-    sid = cx_Oracle.makedsn(cfg.host, cfg.port, sid=cfg.sid)  # host, port, sid
-
-    cstr = f"oracle://{user}:{password}@{sid}"
-
-    engine = create_engine(
-        cstr, convert_unicode=False, pool_recycle=20, pool_size=100, echo=False
-    )
-    return engine
-
-
-def read_sql(filename):
-    sql_file = open(filename, "r")
-    query = sql_file.read()
-    sql_file.close()
-
-    engine = oracle_conn()
-
-    df_from_sql = pd.DataFrame(pd.read_sql_query(query, engine))
-    df_from_sql.columns = map(str.upper, df_from_sql.columns)
-
-    return df_from_sql
-
-
-# def abc_classification(perc):
-#     if 0 < perc < 0.8:
-#         return "A"
-#     elif 0.8 <= perc < 0.9:
-#         return "B"
-#     elif perc >= 0.9:
-#         return "C"
+# def oracle_conn():
+#     user = cfg.username
+#     password = cfg.password
+#     sid = cx_Oracle.makedsn(cfg.host, cfg.port, sid=cfg.sid)  # host, port, sid
 #
+#     cstr = f"oracle://{user}:{password}@{sid}"
 #
-# def xyz_classification(cv):
-#     if 0 < cv < 0.5:
-#         return "X"
-#     elif 0.5 <= cv < 1.5:
-#         return "Y"
-#     elif cv >= 1.5:
-#         return "Z"
+#     engine = create_engine(
+#         cstr, convert_unicode=False, pool_recycle=20, pool_size=100, echo=False
+#     )
+#     return engine
 
 
-query = read_sql("D:\\SQL_Queries\\ABC_CLASS_PARAMETERS.sql")
+# def read_sql(filename):
+#     sql_file = open(filename, "r")
+#     query = sql_file.read()
+#     sql_file.close()
+#
+#     engine = oracle_conn()
+#
+#     df_from_sql = pd.DataFrame(pd.read_sql_query(query, engine))
+#     df_from_sql.columns = map(str.upper, df_from_sql.columns)
+#
+#     return df_from_sql
+
+
+def abc_classification(perc):
+    if 0 < perc < 0.8:
+        return "A"
+    elif 0.8 <= perc < 0.9:
+        return "B"
+    elif perc >= 0.9:
+        return "C"
+
+
+def xyz_classification(cv):
+    if 0 < cv < 0.5:
+        return "X"
+    elif 0.5 <= cv < 1.5:
+        return "Y"
+    elif cv >= 1.5:
+        return "Z"
+
+
+# query = read_sql("D:\\SQL_Queries\\ABC_CLASS_PARAMETERS.sql")
 
 
 def safety_stock_calculation(df, freq="weekly", service_level=0.95):
@@ -82,12 +84,15 @@ def safety_stock_calculation(df, freq="weekly", service_level=0.95):
 # TODO: economic order quantities
 def rop_calculation(location):
     # load data sources into data frames (temporarily CSV files) -->
-    df1 = read_sql(cfg.trinity_wkly)  # ITEMNUM: object datatype
+    # df1 = read_sql(cfg.trinity_wkly)  # ITEMNUM: object datatype
+    df1 = pd.DataFrame(pd.read_csv("c:\\users\\u6zn\\desktop\\usage.csv"))
     df1["ITEMNUM"] = df1["ITEMNUM"].astype(int)
     df1["LOCATION"] = df1["LOCATION"].astype(str)
-    df2 = read_sql(cfg.inventory_params)
+    # df2 = read_sql(cfg.inventory_params)
+    df2 = pd.DataFrame(pd.read_csv("c:\\users\\u6zn\\desktop\\inv_param.csv"))
     df2["LOCATION"] = df2["LOCATION"].astype(str)
-    df3 = read_sql(cfg.leadtime)
+    # df3 = read_sql(cfg.leadtime)
+    df3 = pd.DataFrame(pd.read_csv("c:\\users\\u6zn\\desktop\\leadtime.csv"))
     df4 = abc_classification.abc_analysis(abc_classification.query, "TEST")
     df4 = df4[["ITEMNUM", "ABC", "XYZ"]]
 
@@ -108,7 +113,7 @@ def rop_calculation(location):
 
     # merged = pd.merge(df1_pivot, df5, on=["ITEMNUM", "LOCATION"], how="left")
 
-    merged = df1.merge(df2, how="left", on=["ITEMNUM", "LOCATION"])
+    merged = df1_pivot.merge(df2, how="left", on=["ITEMNUM", "LOCATION"])
     # join lead time data to previously merged data -->
 
     merged = merged.merge(df3, how="left", on="ITEMNUM")
@@ -121,11 +126,13 @@ def rop_calculation(location):
     regex_df = merged["DESCRIPTION"].str.extractall(stdpk_regex)
     regex_df = regex_df.groupby(level=0)[0].apply(list)
     merged["STD_PKG"] = regex_df
+    merged["MAXIMO_LT"] = 14
 
     merged.loc[merged["CALC_AVG_LT"].isnull(), "CALC_AVG_LT"] = merged["MAXIMO_LT"]
     merged.loc[merged["CALC_STDDEV_LT"].isnull(), "CALC_STDDEV_LT"] = round(
         merged["MAXIMO_LT"] * 0.2, 0
     )
+
 
     high_certainty = safety_stock_calculation(merged, "d", service_level=0.95)
     med_certainty = safety_stock_calculation(merged, "d", service_level=0.85)
@@ -268,8 +275,7 @@ def rop_calculation(location):
         ]
     ]
 
-        f"c:\\users\\u6zn\\desktop\\{location}_ROP_review_{timestring}.csv", index=False
-    )
+    # f"c:\\users\\u6zn\\desktop\\{location}_ROP_review_{timestring}.csv", index=False
 
 
 if __name__ == "__main__":

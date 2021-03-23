@@ -10,11 +10,11 @@ filename = pd.read_csv(
 
 filename.apply(
     lambda x: x.to_excel(
-        f"c:\\users\\u6zn\\desktop\\low cost\\Low Cost - {x.name}.xlsx", index=False
+        f"c:\\users\\u6zn\\desktop\\lowcost\\Low Cost - {x.name}.xlsx", index=False
     )
 )
 
-os.chdir("C:\\users\\u6zn\\Desktop\\low cost")
+os.chdir("C:\\users\\u6zn\\Desktop\\lowcost")
 filelist = glob.glob("*.xlsx")
 for file in filelist:
     df = pd.read_excel(file)
