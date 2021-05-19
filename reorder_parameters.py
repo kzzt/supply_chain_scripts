@@ -39,7 +39,8 @@ timestring = time.strftime("%Y-%m-%d")
 # df3 = pd.DataFrame(pd.read_csv("c:\\users\\u6zn\\desktop\\leadtime.csv"))
 #
 
-df1 = read_sql(cfg.trinity_wkly)  # ITEMNUM: object datatype
+# df1 = read_sql(cfg.trinity_wkly)  # ITEMNUM: object datatype
+df1 = read_sql(cfg.trinity_wkly)
 df2 = read_sql(cfg.inventory_params)
 df3 = read_sql(cfg.leadtime)
 # df4 = abc_classification.abc_analysis(abc_classification.query, "TEST")
@@ -101,5 +102,11 @@ merged["LT VARIABILITY"] = lead_time_variability
 merged["SAFETY STOCK"] = safety_stock
 rop = round(safety_stock + lead_time_demand, 0)
 merged["ROP"] = rop
-
-merged.to_excel(f"c:\\users\\u6zn\\desktop\\ROP REVIEW {timestring}.xlsx", index=False)
+try:
+    merged.to_excel(
+        f"c:\\users\\u6zn\\desktop\\ROP REVIEW {timestring}.xlsx", index=False
+    )
+except:
+    merged.to_excel(
+        f"c:\\users\\u6zn\\desktop\\ROP REVIEW {timestring} v2.xlsx", index=False
+    )

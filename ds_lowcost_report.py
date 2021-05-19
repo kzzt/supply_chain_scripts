@@ -4,7 +4,7 @@ import glob
 
 
 filename = pd.read_csv(
-    "C:\\users\\u6zn\\Desktop\\lowcost\\Low_cost.csv", dtype={"LOCATION": object}
+    "C:\\users\\u6zn\\Desktop\\lowcost\\05-19-2021 low_cost.csv", dtype={"LOCATION": object}
 ).groupby("LOCATION")
 
 
