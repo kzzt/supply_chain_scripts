@@ -4,9 +4,6 @@ import glob
 # report_files = glob.glob(
 #     "C:\\Users\\u6zn\\Desktop\\writeoff\\returned\\*.xlsx", recursive=False,
 # )
-report_files = glob.glob(
-    "C:\\Users\\u6zn\\Desktop\\Poles\\*.xlsx", recursive=False,
-)
 
 all_data = pd.DataFrame()
 for f in report_files:
