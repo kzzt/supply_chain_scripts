@@ -4,3 +4,7 @@
 working_scripts/deprecated_pvc_report.py
 working_scripts/emailer_lowcost.py
 working_scripts/emailer_writeoff.py
+/working_scripts/onccfg.py
+/.idea/csv-plugin.xml
+/working_scripts/__init__.py
+/working_scripts/connect.py
